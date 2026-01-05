@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GoatQuote Lite (Static)</title>
+  <style>
+    :root{--bg:#0b0b0f;--card:#141420;--muted:#9aa0aa;--txt:#f2f3f5;--accent:#ff4fd8;--line:#2a2a3a}
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#0b0b0f,#0f1020);color:var(--txt)}
+    a{color:var(--accent)} .wrap{max-width:1100px;margin:0 auto;padding:18px}
+    .top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .brand{display:flex;gap:10px;align-items:center}
+    .pill{border:1px solid var(--line);background:rgba(255,255,255,.03);padding:6px 10px;border-radius:999px;color:var(--muted);font-size:12px}
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;margin-top:14px}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+    .card{background:rgba(20,20,32,.85);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    h1{font-size:18px;margin:0} h2{font-size:14px;margin:0 0 10px 0;color:#e9e9ff}
+    .muted{color:var(--muted);font-size:13px;line-height:1.35}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+    input,select,textarea{width:100%;background:#0f0f18;color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:10px;font-size:14px;outline:none}
+    textarea{min-height:84px;resize:vertical}
+    .btn{background:linear-gradient(90deg,var(--accent),#7c4dff);border:0;color:white;padding:10px 12px;border-radius:12px;font-weight:700;cursor:pointer}
+    .btn2{background:transparent;border:1px solid var(--line);color:var(--txt);padding:10px 12px;border-radius:12px;font-weight:650;cursor:pointer}
+    .btn:active,.btn2:active{transform:translateY(1px)}
+    .thumbs{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+    @media (max-width:700px){.thumbs{grid-template-columns:repeat(3,1fr)}}
+    .thumb{border:1px dashed var(--line);border-radius:12px;aspect-ratio:1/1;position:relative;overflow:hidden;background:#0f0f18}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .thumb .x{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.15);color:white;border-radius:10px;padding:4px 7px;font-size:12px;cursor:pointer}
+    .thumb .n{position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.15);color:white;border-radius:10px;padding:3px 7px;font-size:12px}
+    .thumb.dragging{opacity:.55}
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media (max-width:700px){.split{grid-template-columns:1fr}}
+    .hr{height:1px;background:var(--line);margin:12px 0}
+    .badge{display:inline-flex;gap:8px;align-items:center;padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03);font-size:13px}
+    .k{color:var(--muted);font-size:12px}
+    .v{font-weight:800}
+    .msgs{display:grid;gap:10px}
+    .msg{border:1px solid var(--line);border-radius:14px;padding:10px;background:#0f0f18}
+    .msg pre{margin:0;white-space:pre-wrap;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:12px;line-height:1.35}
+    .bar{height:10px;background:#0f0f18;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+    .bar > div{height:100%;width:50%;background:linear-gradient(90deg,#38bdf8,var(--accent))}
+    .warn{color:#ffd27d}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <h1>🐐 GoatQuote Lite</h1>
+        <span class="pill">Single-file HTML demo (no login / no backend)</span>
+      </div>
+      <div class="row">
+        <button class="btn2" id="loadShareBtn">Load share link</button>
+        <button class="btn" id="copyShareBtn">Copy share link</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>1) Photos (1–20) — drag to reorder</h2>
+        <div class="row" style="align-items:flex-end">
+          <div style="flex:1;min-width:240px">
+            <label>Upload photos</label>
+            <input type="file" id="photos" accept="image/*" multiple />
+            <div class="muted">Tip: more photos = higher confidence.</div>
+          </div>
+          <button class="btn2" id="clearPhotos">Clear</button>
+        </div>
+        <div class="hr"></div>
+        <div class="thumbs" id="thumbs"></div>
+
+        <div class="hr"></div>
+        <h2>2) Job details</h2>
+        <div class="split">
+          <div>
+            <label>Location / Address (optional)</label>
+            <input id="location" placeholder="City or address (optional)" />
+          </div>
+          <div>
+            <label>When do they need it?</label>
+            <select id="timing">
+              <option value="today">Today</option>
+              <option value="24h">Within 24 hours</option>
+              <option value="48h">Within 48 hours</option>
+              <option value="week" selected>This week</option>
+              <option value="flex">Flexible</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="split" style="margin-top:10px">
+          <div>
+            <label>Access</label>
+            <select id="access">
+              <option value="easy" selected>Easy (curb / driveway)</option>
+              <option value="normal">Normal (short carry)</option>
+              <option value="tight">Tight / long carry</option>
+              <option value="inside">Inside pickup</option>
+            </select>
+          </div>
+          <div>
+            <label>Stairs / Elevator</label>
+            <select id="stairs">
+              <option value="none" selected>No stairs</option>
+              <option value="1">1 flight</option>
+              <option value="2">2 flights</option>
+              <option value="3">3+ flights</option>
+              <option value="elevator">Elevator</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-top:10px">
+          <label>Notes (heavy stuff? tight parking? gate code? etc.)</label>
+          <textarea id="notes" placeholder="Example: 2 mattresses + dresser, narrow hallway, wants ASAP."></textarea>
+        </div>
+
+        <div class="hr"></div>
+        <h2>3) Quick estimate inputs</h2>
+
+        <div class="split">
+          <div>
+            <label>Load size</label>
+            <select id="volume">
+              <option value="0.125">1/8 load</option>
+              <option value="0.25">1/4 load</option>
+              <option value="0.375">3/8 load</option>
+              <option value="0.5" selected>1/2 load</option>
+              <option value="0.625">5/8 load</option>
+              <option value="0.75">3/4 load</option>
+              <option value="0.875">7/8 load</option>
+              <option value="1">Full load</option>
+            </select>
+            <div class="muted">This is the main driver of pricing.</div>
+          </div>
+
+          <div>
+            <label>Labor difficulty (1–10)</label>
+            <input id="labor" type="range" min="1" max="10" value="5" />
+            <div class="muted">Current: <span id="laborVal">5</span></div>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+        <h2>Heavy items (qty)</h2>
+        <div class="split" id="heavyGrid"></div>
+
+        <div class="hr"></div>
+        <div class="row">
+          <button class="btn" id="calcBtn">Generate quote</button>
+          <button class="btn2" id="resetBtn">Reset</button>
+        </div>
+        <div class="muted" style="margin-top:8px">
+          ⚠️ This is a static demo. If you want the full app (login + database + shareable quote pages), we still deploy your Next.js build.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Quote output</h2>
+
+        <div class="badge"><span class="k">Price range</span> <span class="v" id="range">$—</span></div>
+        <div style="height:10px"></div>
+        <div class="badge"><span class="k">Recommended close</span> <span class="v" id="close">$—</span></div>
+        <div style="height:10px"></div>
+        <div class="badge"><span class="k">“Bid to win”</span> <span class="v" id="bid">$—</span></div>
+
+        <div class="hr"></div>
+
+        <div class="k">Confidence</div>
+        <div class="bar" title="Confidence based on photo count + details">
+          <div id="confBar"></div>
+        </div>
+        <div class="muted" style="margin-top:6px">
+          <span id="confText">—</span>
+        </div>
+
+        <div class="hr"></div>
+
+        <h2>Copy/paste close messages</h2>
+        <div class="msgs">
+          <div class="msg">
+            <div class="row" style="justify-content:space-between;align-items:center">
+              <div class="k">Short SMS</div>
+              <button class="btn2" data-copy="sms">Copy</button>
+            </div>
+            <pre id="sms"></pre>
+          </div>
+
+          <div class="msg">
+            <div class="row" style="justify-content:space-between;align-items:center">
+              <div class="k">FB/DM (friendly)</div>
+              <button class="btn2" data-copy="dm">Copy</button>
+            </div>
+            <pre id="dm"></pre>
+          </div>
+
+          <div class="msg">
+            <div class="row" style="justify-content:space-between;align-items:center">
+              <div class="k">Price-flex / “Name your price”</div>
+              <button class="btn2" data-copy="flex">Copy</button>
+            </div>
+            <pre id="flex"></pre>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+        <div class="muted">
+          Want this to look like a true app on your phone? Once hosted, you can “Add to Home Screen” and it acts like an app.
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const PRICING = {
+    baseByVolume: {
+      "0.125": [125, 175],
+      "0.25":  [175, 250],
+      "0.375": [240, 340],
+      "0.5":   [300, 450],
+      "0.625": [380, 560],
+      "0.75":  [450, 680],
+      "0.875": [520, 780],
+      "1":     [600, 900]
+    },
+    accessMultiplier: { easy: 1.00, normal: 1.05, tight: 1.15, inside: 1.25 },
+    stairsAddPct:     { none: 0.00, "1": 0.08, "2": 0.14, "3": 0.22, elevator: 0.04 },
+    laborAdjustPctPerPoint: 0.03,
+    heavy: [
+      { key:"mattress", label:"Mattress", add:[25,50] },
+      { key:"boxspring", label:"Box spring", add:[15,35] },
+      { key:"sofa", label:"Sofa", add:[40,90] },
+      { key:"sectional", label:"Sectional", add:[80,160] },
+      { key:"fridge", label:"Fridge", add:[40,120] },
+      { key:"washer", label:"Washer/Dryer", add:[40,110] },
+      { key:"piano", label:"Piano", add:[150,350] },
+      { key:"hotTub", label:"Hot tub", add:[200,500] },
+      { key:"concrete", label:"Concrete/debris", add:[80,240] },
+      { key:"tvBig", label:"75\"+ TV", add:[20,70] },
+    ]
+  };
+
+  let photoItems = [];
+  const uid = () => Math.random().toString(36).slice(2,10);
+
+  const el = (id) => document.getElementById(id);
+  const thumbs = el("thumbs");
+
+  const labor = el("labor");
+  const laborVal = el("laborVal");
+
+  const rangeOut = el("range");
+  const closeOut = el("close");
+  const bidOut = el("bid");
+  const confBar = el("confBar");
+  const confText = el("confText");
+
+  const smsOut = el("sms");
+  const dmOut = el("dm");
+  const flexOut = el("flex");
+
+  const heavyGrid = el("heavyGrid");
+  function buildHeavyUI(){
+    heavyGrid.innerHTML = "";
+    PRICING.heavy.forEach((h) => {
+      const wrap = document.createElement("div");
+      wrap.innerHTML = `
+        <label>${h.label}</label>
+        <input type="number" min="0" value="0" id="heavy_${h.key}" />
+        <div class="muted">Adds $${h.add[0]}–$${h.add[1]} each</div>
+      `;
+      heavyGrid.appendChild(wrap);
+    });
+  }
+  buildHeavyUI();
+
+  el("photos").addEventListener("change", (e) => {
+    const files = Array.from(e.target.files || []).slice(0, 20 - photoItems.length);
+    files.forEach(file => {
+      const url = URL.createObjectURL(file);
+      photoItems.push({ id: uid(), file, url });
+    });
+    e.target.value = "";
+    renderThumbs();
+    autoCalc();
+  });
+
+  el("clearPhotos").addEventListener("click", () => {
+    photoItems.forEach(p => URL.revokeObjectURL(p.url));
+    photoItems = [];
+    renderThumbs();
+    autoCalc();
+  });
+
+  function renderThumbs(){
+    thumbs.innerHTML = "";
+    photoItems.forEach((p, i) => {
+      const t = document.createElement("div");
+      t.className = "thumb";
+      t.draggable = true;
+      t.dataset.id = p.id;
+      t.innerHTML = `
+        <img src="${p.url}" alt="photo ${i+1}" />
+        <div class="x" title="Remove">✕</div>
+        <div class="n">${i+1}</div>
+      `;
+      t.querySelector(".x").addEventListener("click", () => {
+        URL.revokeObjectURL(p.url);
+        photoItems = photoItems.filter(x => x.id !== p.id);
+        renderThumbs();
+        autoCalc();
+      });
+
+      t.addEventListener("dragstart", (ev) => {
+        t.classList.add("dragging");
+        ev.dataTransfer.setData("text/plain", p.id);
+      });
+      t.addEventListener("dragend", () => t.classList.remove("dragging"));
+      t.addEventListener("dragover", (ev) => ev.preventDefault());
+      t.addEventListener("drop", (ev) => {
+        ev.preventDefault();
+        const fromId = ev.dataTransfer.getData("text/plain");
+        const toId = p.id;
+        if(!fromId || fromId === toId) return;
+        const fromIdx = photoItems.findIndex(x => x.id === fromId);
+        const toIdx = photoItems.findIndex(x => x.id === toId);
+        const item = photoItems.splice(fromIdx, 1)[0];
+        photoItems.splice(toIdx, 0, item);
+        renderThumbs();
+      });
+
+      thumbs.appendChild(t);
+    });
+  }
+
+  labor.addEventListener("input", () => {
+    laborVal.textContent = labor.value;
+    autoCalc();
+  });
+
+  ["location","timing","access","stairs","notes","volume"].forEach(id=>{
+    el(id).addEventListener("input", autoCalc);
+    el(id).addEventListener("change", autoCalc);
+  });
+  PRICING.heavy.forEach(h => {
+    el(`heavy_${h.key}`).addEventListener("input", autoCalc);
+  });
+
+  el("calcBtn").addEventListener("click", calc);
+  el("resetBtn").addEventListener("click", resetAll);
+
+  document.body.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-copy]");
+    if(!btn) return;
+    const which = btn.getAttribute("data-copy");
+    const text = which==="sms" ? smsOut.textContent : which==="dm" ? dmOut.textContent : flexOut.textContent;
+    await copyText(text);
+    btn.textContent = "Copied!";
+    setTimeout(()=>btn.textContent="Copy", 900);
+  });
+
+  async function copyText(text){
+    try{ await navigator.clipboard.writeText(text); }
+    catch{ window.prompt("Copy this:", text); }
+  }
+
+  function calc(){
+    const volume = el("volume").value;
+    const base = PRICING.baseByVolume[volume] || [300,450];
+
+    const access = el("access").value;
+    const stairs = el("stairs").value;
+    const accessMult = PRICING.accessMultiplier[access] ?? 1;
+    const stairsPct = PRICING.stairsAddPct[stairs] ?? 0;
+
+    let heavyMin = 0, heavyMax = 0, heavyCount = 0;
+    PRICING.heavy.forEach(h => {
+      const qty = Math.max(0, Number(el(`heavy_${h.key}`).value || 0));
+      if(qty){
+        heavyCount += qty;
+        heavyMin += h.add[0]*qty;
+        heavyMax += h.add[1]*qty;
+      }
+    });
+
+    const laborScore = Number(el("labor").value);
+    const delta = laborScore - 5;
+    const laborMult = 1 + (delta * PRICING.laborAdjustPctPerPoint);
+
+    let min = (base[0] + heavyMin) * accessMult * laborMult;
+    let max = (base[1] + heavyMax) * accessMult * laborMult;
+
+    min = min * (1 + stairsPct);
+    max = max * (1 + stairsPct);
+
+    const timing = el("timing").value;
+    const urgency = (timing==="today") ? 1.10 : (timing==="24h") ? 1.06 : 1.00;
+    min *= urgency; max *= urgency;
+
+    min = roundTo(min, 10);
+    max = roundTo(max, 10);
+    if(max < min) [min,max] = [max,min];
+
+    const close = roundTo(min + (max-min)*0.35, 10);
+    const bid = roundTo(Math.max(min, close - 40), 10);
+
+    rangeOut.textContent = `$${min} – $${max}`;
+    closeOut.textContent = `$${close}`;
+    bidOut.textContent = `$${bid}`;
+
+    const conf = confidenceScore({ photoCount: photoItems.length, notes: el("notes").value, heavyCount, location: el("location").value });
+    confBar.style.width = `${conf}%`;
+    confText.textContent = conf >= 75 ? `High (${conf}%)` : conf >= 50 ? `Medium (${conf}%)` : `Low (${conf}%)`;
+    if(conf < 50){
+      confText.innerHTML = `<span class="warn">Low (${conf}%)</span> — add more photos/details for accuracy.`;
+    }
+
+    const loc = el("location").value?.trim();
+    const locLine = loc ? `Location: ${loc}\n` : "";
+    const stairsLine = stairs==="none" ? "" : `Stairs: ${stairs === "elevator" ? "elevator" : stairs + " flight(s)"}\n`;
+
+    smsOut.textContent =
+`Got you ✅ Based on what I’m seeing, I can do it for ${rangeOut.textContent}. If you want to lock it in today, I recommend ${closeOut.textContent}. When can we come by?`;
+
+    dmOut.textContent =
+`Hey! Thanks for reaching out 👋
+I can get this handled for you.
+
+Estimate: ${rangeOut.textContent}
+Best “lock it in” price: ${closeOut.textContent}
+
+${locLine}${stairsLine}If that works, tell me your preferred time window and we’ll get you scheduled.`;
+
+    flexOut.textContent =
+`We can work with your budget.
+Our estimated range is ${rangeOut.textContent}.
+If you want to “name your price,” send your number and I’ll confirm if we can lock it in — if it’s reasonable, we’ll post it to our crew and get it done.`;
+  }
+
+  function autoCalc(){ calc(); }
+
+  function resetAll(){
+    photoItems.forEach(p => URL.revokeObjectURL(p.url));
+    photoItems = [];
+    renderThumbs();
+
+    el("location").value = "";
+    el("timing").value = "week";
+    el("access").value = "easy";
+    el("stairs").value = "none";
+    el("notes").value = "";
+    el("volume").value = "0.5";
+    el("labor").value = "5";
+    laborVal.textContent = "5";
+    PRICING.heavy.forEach(h => el(`heavy_${h.key}`).value = "0");
+
+    calc();
+  }
+
+  function roundTo(n, step){ return Math.round(n/step)*step; }
+
+  function confidenceScore({photoCount, notes, heavyCount, location}){
+    let score = 25;
+    score += Math.min(45, photoCount * 6);
+    score += notes?.trim() ? 15 : 0;
+    score += location?.trim() ? 8 : 0;
+    score += heavyCount ? 7 : 0;
+    return Math.max(10, Math.min(95, score));
+  }
+
+  function snapshot(){
+    return {
+      v: el("volume").value,
+      labor: el("labor").value,
+      timing: el("timing").value,
+      access: el("access").value,
+      stairs: el("stairs").value,
+      location: el("location").value,
+      notes: el("notes").value,
+      heavy: Object.fromEntries(PRICING.heavy.map(h => [h.key, el(`heavy_${h.key}`).value]))
+    };
+  }
+  function applySnapshot(data){
+    if(!data) return;
+    el("volume").value = data.v ?? "0.5";
+    el("labor").value = data.labor ?? "5";
+    laborVal.textContent = el("labor").value;
+    el("timing").value = data.timing ?? "week";
+    el("access").value = data.access ?? "easy";
+    el("stairs").value = data.stairs ?? "none";
+    el("location").value = data.location ?? "";
+    el("notes").value = data.notes ?? "";
+    if(data.heavy){
+      PRICING.heavy.forEach(h => {
+        if(data.heavy[h.key] != null) el(`heavy_${h.key}`).value = data.heavy[h.key];
+      });
+    }
+    calc();
+  }
+  function encode(obj){ return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))); }
+  function decode(str){ return JSON.parse(decodeURIComponent(escape(atob(str)))); }
+
+  el("copyShareBtn").addEventListener("click", async () => {
+    const hash = "#q=" + encode(snapshot());
+    const url = location.origin + location.pathname + hash;
+    await copyText(url);
+    el("copyShareBtn").textContent = "Copied!";
+    setTimeout(()=>el("copyShareBtn").textContent="Copy share link", 900);
+  });
+
+  el("loadShareBtn").addEventListener("click", async () => {
+    const u = window.prompt("Paste a GoatQuote Lite share link:");
+    if(!u) return;
+    try{
+      const idx = u.indexOf("#q=");
+      if(idx === -1) throw new Error("No #q= found");
+      const payload = u.slice(idx + 3);
+      applySnapshot(decode(payload));
+      window.location.hash = "q=" + payload;
+    }catch{
+      alert("Could not load link. Make sure it includes #q=...");
+    }
+  });
+
+  (function init(){
+    try{
+      if(location.hash.startsWith("#q=")){
+        applySnapshot(decode(location.hash.slice(3)));
+      } else { calc(); }
+    } catch { calc(); }
+  })();
+</script>
+</body>
+</html>
